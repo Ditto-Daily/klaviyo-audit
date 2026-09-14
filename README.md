@@ -78,6 +78,7 @@ pip install -r requirements.txt
 Create `.env`:
 
 ```bash
+APP_PASSWORD=choose-a-strong-password
 KLAVIYO_API_KEY=pk_...
 GEMINI_API_KEY=...
 GEMINI_MODEL=gemini-3.5-flash
@@ -105,6 +106,7 @@ Open [http://localhost:8501](http://localhost:8501).
 3. **Advanced settings → Secrets:**
 
 ```toml
+APP_PASSWORD = "choose-a-strong-password"
 KLAVIYO_API_KEY = "pk_..."
 GEMINI_API_KEY = "..."
 GEMINI_MODEL = "gemini-3.5-flash"
@@ -143,10 +145,12 @@ Gemini sees flow names, statuses, triggers, delays, subjects, preview text, body
 
 | Key | Required | Default |
 |-----|----------|---------|
+| `APP_PASSWORD` | yes (gates the whole app) | — |
 | `KLAVIYO_API_KEY` | for Sync | — |
 | `GEMINI_API_KEY` | for chat | — |
 | `GEMINI_MODEL` | no | `gemini-3.5-flash` |
 
+Visitors see a password screen until they unlock. Use **Log out** in the sidebar to clear the session.
 Fallbacks if the primary model 404s: `gemini-3.6-flash`, `gemini-3-flash-preview`.
 
 Never commit `.env` or `.streamlit/secrets.toml`.

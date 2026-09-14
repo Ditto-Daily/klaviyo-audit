@@ -7,6 +7,7 @@ Run:
 
 from __future__ import annotations
 
+import hmac
 from datetime import datetime
 from pathlib import Path
 
@@ -36,6 +37,40 @@ def _key_configured(name: str) -> bool:
     value = get_secret(name)
     return bool(value) and not value.startswith("your_")
 
+
+def _require_password() -> bool:
+    """
+    Gate the whole app behind APP_PASSWORD (Streamlit secrets / .env).
+
+    Returns True if the visitor may continue, False if the login form was shown.
+    """
+    expected = get_secret("APP_PASSWORD")
+    if not expected:
+        st.error(
+            "This app is locked. Set `APP_PASSWORD` in Streamlit secrets "
+            "(or `.env` locally), then reboot the app."
+        )
+        st.stop()
+        return False
+
+    if st.session_state.get("authenticated"):
+        return True
+
+    st.markdown('<p class="hero-kicker">Ditto Daily</p>', unsafe_allow_html=True)
+    st.title("Klaviyo AI Assistant")
+    st.caption("Password required — internal use only.")
+
+    with st.form("login_form", clear_on_submit=False):
+        password = st.text_input("Password", type="password", autocomplete="current-password")
+        submitted = st.form_submit_button("Unlock", type="primary", use_container_width=True)
+
+    if submitted:
+        if hmac.compare_digest(password.strip(), expected):
+            st.session_state["authenticated"] = True
+            st.rerun()
+        st.error("Incorrect password.")
+
+    return False
 
 def _format_synced_at(raw: object) -> str:
     if not raw:
@@ -128,6 +163,10 @@ def main() -> None:
         initial_sidebar_state="expanded",
     )
     _inject_styles()
+
+    if not _require_password():
+        return
+
     init_chat_state()
 
     dump = load_dump()
@@ -139,6 +178,9 @@ def main() -> None:
     with st.sidebar:
         st.markdown("### ✉️ Klaviyo Copilot")
         st.caption("Lifecycle audit & copy assistant")
+        if st.button("Log out", use_container_width=True):
+            st.session_state["authenticated"] = False
+            st.rerun()
         st.divider()
 
         st.markdown("**API status**")
